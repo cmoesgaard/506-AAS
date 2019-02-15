@@ -60,6 +60,7 @@ def parse_text(text_filename):
             other = other[:-1]
 
         date = parse(blurb[0]).date()
+        blurb = ' '.join(blurb[1:])
 
         days.append(Day(
             date=date,
