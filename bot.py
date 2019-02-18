@@ -38,6 +38,7 @@ def format_menu(menu: dict) -> str:
     today = datetime.date.today()
 
     menu_text = f"""*Menu for {today}*:
+    {menu['blurb']}
 
     *Dish of the day*
     {prettify(menu['dish_of_the_day'])}
@@ -54,7 +55,7 @@ def format_menu(menu: dict) -> str:
 
 def format_cake(cake: dict) -> str:
     cake_text = f"""
-    *Kage*
+    *Cake*
     {cake['cake']}
     """
     return cake_text
