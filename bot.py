@@ -38,18 +38,23 @@ def format_menu(menu: dict) -> str:
     today = datetime.date.today()
 
     menu_text = f"""*Menu for {today}*:
-    {menu['blurb']}
+{menu['blurb']}
 
-    *Dish of the day*
-    {prettify(menu['dish_of_the_day'])}
-    *Eat with*
-    {prettify(menu['eat_with'])}
-    *Top with*
-    {prettify(menu['top_with'])}
+*Dish of the day*
+{prettify(menu['dish_of_the_day'])}
+*Eat with*
+{prettify(menu['eat_with'])}"""
 
-    *The other stuff*
-    {prettify(menu['the_other_stuff'])}
-    """
+    if menu.get('top_with'):
+        menu_text += f"""
+*Top with*
+{prettify(menu['top_with'])}"""
+
+    menu_text += f"""
+
+*The other stuff*
+{prettify(menu['the_other_stuff'])}"""
+
     return menu_text
 
 

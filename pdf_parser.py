@@ -51,9 +51,17 @@ def parse_text(text_filename):
     days = []
 
     for index, page in enumerate(pages[1:6]):
-        blurb, dish, eat, top, other = map(list_and_prettify,
-                                           re.split('|'.join(splitters), page)[
-                                           0:5])
+        chunks = list(map(list_and_prettify,
+                          re.split('|'.join(splitters), page)))
+        blurb, dish, eat = chunks[0:3]
+
+        if len(chunks) == 6:
+            top = chunks[3]
+        else:
+            top = None
+
+        other = chunks[-2]
+
         # If Thursday
         if index == 3:
             cake = other[-1]

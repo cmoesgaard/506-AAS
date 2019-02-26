@@ -2,7 +2,7 @@ import datetime
 import json
 import os
 from typing import List
-from parser import Day
+from pdf_parser import Day
 
 CACHE_DIR = os.getenv('CACHE_DIR', 'cache')
 
