@@ -1,9 +1,39 @@
+import configparser
+import os
 from typing import List
 
 import requests
 import re
 import datetime
 import html
+
+base_path = os.path.dirname(os.path.realpath(__file__))
+config = configparser.ConfigParser()
+config.read(os.path.join(base_path, 'config.ini'))
+
+rocket_config = config['ROCKET']
+
+ALLERGEN_MAP = {
+    'sulfur-dioxide-sulfites': None,
+    'mushrooms': None,
+    'celery': None,
+    'eggs': None,
+    'gluten': ":bread:",
+    'mustard': None,
+    'sesame-seeds': None,
+    'milk-lactose': ":milk:",
+    'soy': None,
+    'fish': ":fish:",
+    'shellfish': None,
+    'nuts': ":contains-nuts:",
+    'peanuts': None,
+}
+
+MENU_URL = config['MENU']['URL']
+HOOK_URL = rocket_config['URL']
+ICON_URL = rocket_config['ICON']
+CHANNEL = rocket_config['CHANNEL']
+BOT_NAME = rocket_config['BOT_NAME']
 
 
 def get_menu():
@@ -18,7 +48,6 @@ def get_menu():
 def fetch_menu(urls):
     for url in urls:
         try:
-            print(url)
             r = requests.get(url)
             menu_json = r.json()
             if menu_json:
@@ -26,7 +55,6 @@ def fetch_menu(urls):
         except:
             pass
     raise Exception('No menu found')
-
 
 
 def extract_menu(menu_json: dict, date: datetime.date) -> str:
@@ -37,35 +65,13 @@ def extract_menu(menu_json: dict, date: datetime.date) -> str:
     acf = inner_menu.get('acf')
 
     date_string = f"*Menu for {date}*"
-    story = parse_story(acf.get('story'))
+    story = prettify(acf.get('story')).strip()
     menu_items = parse_menu_items(acf.get('menu_items'))
 
     return "\n".join([date_string] + [story] + menu_items)
 
 
-def parse_story(story: str) -> str:
-    story = re.sub('<p>|</p>', '', story).strip()
-    return story
-
-
 def parse_menu_items(menu_items: list) -> List[str]:
-
-    allergen_map = {
-        'sulfur-dioxide-sulfites': ":wine_glass:",
-        'mushrooms': ":mushroom:",
-        'celery': ":shrug:",
-        'eggs': ":egg:",
-        'gluten': ":bread:",
-        'mustard': ":shrug:",
-        'sesame-seeds': ":shrug:",
-        'milk-lactose': ":milk:",
-        'soy': ":shrug:",
-        'fish': ":fish:",
-        'shellfish': ":crab:",
-        'nuts': ":shrug:",
-        'peanuts': ":peanuts:",
-    }
-
     def parse_menu_item(menu_item: dict) -> str:
         text = menu_item.get('text').strip()
 
@@ -73,18 +79,12 @@ def parse_menu_items(menu_items: list) -> List[str]:
         allergen_emojis = []
         if allergens:
             for allergen in allergens:
-                allergen_emojis.append(allergen_map[allergen.get('slug')])
+                allergen_key = allergen.get('slug')
+                emoji = ALLERGEN_MAP.get(allergen_key)
+                if emoji:
+                    allergen_emojis.append(emoji)
 
         return f'{text} {" ".join(allergen_emojis)}'.strip()
-
-    def prettify_menu_item(menu_item: str) -> str:
-        conversion_map = {
-            '<em>': '_',
-            '</em>': '_',
-            '<b>': '*',
-            '</b>': '*',
-        }
-        return html.unescape(menu_item)
 
     handlers = {
         'menu_title': lambda text: f"\n*{text}*",
@@ -97,14 +97,19 @@ def parse_menu_items(menu_items: list) -> List[str]:
     for item in menu_items:
         item_type = item.get('acf_fc_layout')
         item_text = item.get(item_type)
-        parsed_item = prettify_menu_item(handlers[item_type](item_text))
+        parsed_item = prettify(handlers[item_type](item_text))
         parsed_items.append(parsed_item)
 
     return parsed_items
 
 
+def prettify(item: str) -> str:
+    item = re.sub('<.+?>', '', item)
+    return html.unescape(item)
+
+
 def generate_urls(date: datetime.date):
-    date_string = 'may-2-2019'
+    date_string = date.strftime('%B-%-d-%Y').lower()
     url_tday = (
         f"https://trouble.tools/506/wp-json/wp/v2/multiple-post-type"
         f"?slug={date_string}-thoughtful-t-day&type[]=page&type[]=topic&type[]=story&"
@@ -120,9 +125,17 @@ def generate_urls(date: datetime.date):
     return url_tday, url
 
 
+def post(text: str):
+    r = requests.post(
+        HOOK_URL,
+        json={'text': text, 'channel': CHANNEL, 'from': BOT_NAME, 'icon_url': ICON_URL},
+    )
+    r.raise_for_status()
+
+
 def main():
     menu = get_menu()
-    print(menu)
+    post(menu)
 
 
 if __name__ == '__main__':
