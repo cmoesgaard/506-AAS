@@ -126,6 +126,12 @@ def generate_urls(date: datetime.date) -> List[str]:
     :return: A list of possible URLs
     """
     date_string = date.strftime("%B-%-d-%Y").lower()
+    url_veggie = (
+        f"https://trouble.tools/506/wp-json/wp/v2/multiple-post-type"
+        f"?slug={date_string}-veggie&type[]=page&type[]=topic&type[]=story&"
+        f"type[]=product&type[]=collection&type[]=event&type[]=menu&"
+        f"type[]=person&type[]=recipe"
+    )
     url_tday = (
         f"https://trouble.tools/506/wp-json/wp/v2/multiple-post-type"
         f"?slug={date_string}-thoughtful-t-day&type[]=page&type[]=topic&type[]=story&"
@@ -138,7 +144,7 @@ def generate_urls(date: datetime.date) -> List[str]:
         f"type[]=product&type[]=collection&type[]=event&type[]=menu&"
         f"type[]=person&type[]=recipe"
     )
-    return [url_tday, url]
+    return [url_veggie, url_tday, url]
 
 
 def main():
